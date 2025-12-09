@@ -10,6 +10,7 @@ import com.google.genai.types.Content;
 import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
 import com.google.genai.types.Part;
+import com.google.genai.types.Schema;
 
 public class App
 {
@@ -17,18 +18,29 @@ public class App
     {
         System.out.println( "Starting Gemini API call..." );
 
+        String instruction = "Your name is NOVA, an advanced AI assistant developed by Nova Corp. "
+                + "You are here to help users with their questions and provide information on a wide range of topics. "
+                + "Be friendly, informative, and concise in your responses.";
+
+        String rawJsonSchemaString = """
+            {
+            "type": "object",
+            "properties": {
+                "assistantResponse": {
+                "type": "string",
+                "description": "The AI assistant's conversational response."
+                }
+            },
+            "required": ["assistantResponse"]
+            }
+            """;
+            
         try {
             // The client automatically picks up the GEMINI_API_KEY environment variable.
             Client client = new Client();
 
-            // Initialize conversation history with an optional system prompt
+            // Initialize conversation history
             List<Content> conversation = new ArrayList<>();
-            conversation.add(
-                Content.builder()
-                    .role("model")
-                    .parts(Collections.singletonList(Part.builder().text("You are a helpful assistant.").build()))
-                    .build()
-            );
 
             Scanner scanner = new Scanner(System.in);
 
@@ -51,16 +63,29 @@ public class App
                         .build()
                 );
 
-                // Send the prompt / conversation to the model
+                
                 GenerateContentResponse response = client.models.generateContent(
-                    "gemini-2.5-flash", // Specify the model to use
+                    "gemini-2.5-flash-lite",
                     conversation,
-                    GenerateContentConfig.builder().build()
+                    GenerateContentConfig.builder()
+                        .systemInstruction(
+                            Content.builder()
+                                .role("user")
+                                .parts(Collections.singletonList(Part.builder().text(instruction).build()))
+                                .build()
+                        )
+                        .temperature(1.0f)
+                        .responseMimeType("application/json")
+                        .responseSchema(Schema.fromJson(rawJsonSchemaString))
+                        .build()
                 );
 
-                // Print and append the model's response
-                String assistantText = response.text();
-                System.out.println("Assistant: " + assistantText);
+                // --- Parse the JSON response into our Java object ---
+                String jsonResponse = response.text();
+                //AssistantResponse parsedResponse = gson.fromJson(jsonResponse, AssistantResponse.class);
+                //String assistantText = parsedResponse.getAssistantResponse();
+                String assistantText = jsonResponse; // Placeholder until JSON parsing is implemented
+                System.out.println("Model: \n" + assistantText);
 
                 conversation.add(
                     Content.builder()
