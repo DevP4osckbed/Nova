@@ -1,0 +1,11 @@
+{
+	"image": "mcr.microsoft.com/devcontainers/universal:2",
+	"features": {
+		"ghcr.io/devcontainers-extra/features/maven-sdkman:2": {
+			"version": "latest",
+			"jdkVersion": "17",
+			"jdkDistro": "ms"
+		},
+		"ghcr.io/roul/devcontainer-features/mise-java:1": {}
+	}
+}
